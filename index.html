@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MikPay</title>
+<style>
+  :root{
+    --bg1:#4e6cff; --bg2:#6fc1ff;
+    --card:#ffffff; --text:#0f172a; --muted:#64748b;
+    --line:#e5e7eb; --primary:#4e6cff; --primary2:#3656c3;
+    --danger:#ef4444; --shadow:0 16px 40px rgba(2,8,23,.18);
+    --radius:18px;
+  }
+  body.dark{
+    --bg1:#0b1220; --bg2:#111827;
+    --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
+    --line:#1f2937; --primary:#5b7cfa; --primary2:#3757c8;
+    --shadow:0 16px 44px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  body{margin:0;min-height:100vh;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--text)}
+  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
+  .shell{
+    width:min(410px,100%);
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:calc(var(--radius) + 8px);
+    padding:14px;
+    backdrop-filter: blur(10px);
+  }
+  .app{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 14px;border-bottom:1px solid var(--line);
+  }
+  .brand{
+    display:flex;gap:10px;align-items:center;
+    user-select:none;
+  }
+  .logo{
+    width:34px;height:34px;border-radius:12px;
+    background:linear-gradient(135deg,var(--primary),#8aa7ff);
+    box-shadow:0 10px 22px rgba(78,108,255,.35);
+  }
+  .brand b{font-size:16px;letter-spacing:.2px;cursor:pointer}
+  .pill{
+    font-size:12px;color:var(--muted);
+    border:1px solid var(--line);
+    padding:6px 10px;border-radius:999px;
+  }
+  .iconbtn{
+    border:1px solid var(--line); background:transparent; color:var(--text);
+    border-radius:12px; padding:10px 12px; cursor:pointer;
+  }
+  .screen{padding:16px}
+  .title{margin:6px 0 14px;font-size:22px}
+  .sub{color:var(--muted);font-size:13px;margin-top:-10px;margin-bottom:14px}
+
+  .card{
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:14px;
+    background:rgba(255,255,255,.02);
+  }
+  body.dark .card{background:rgba(255,255,255,.03)}
+  .row{display:flex;gap:10px}
+  .row > *{flex:1}
+
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+  input, textarea{
+    width:100%;padding:12px 12px;
+    border-radius:12px;border:1px solid var(--line);
+    background:transparent;color:var(--text);
+    outline:none;
+  }
+  input:focus, textarea:focus{border-color:rgba(78,108,255,.55);box-shadow:0 0 0 3px rgba(78,108,255,.18)}
+  .btn{
+    width:100%;
+    border:none;border-radius:14px;
+    padding:12px 14px;
+    background:var(--primary);color:white;
+    font-weight:700;cursor:pointer;
+    transition:.15s transform,.15s filter;
+  }
+  .btn:hover{filter:brightness(1.02)}
+  .btn:active{transform:translateY(1px)}
+  .btn.secondary{
+    background:transparent;color:var(--text);
+    border:1px solid var(--line);
+    font-weight:700;
+  }
+  .btn.danger{
+    background:var(--danger);
+  }
+  .muted{color:var(--muted);font-size:13px}
+  .center{text-align:center}
+  .gap{height:10px}
+
+  .balance{
+    font-size:34px;font-weight:800;letter-spacing:-.5px;
+  }
+  .balance small{font-size:14px;color:var(--muted);font-weight:600;margin-left:8px}
+  .actions{display:flex;gap:10px;margin-top:12px}
+  .actions .btn{flex:1}
+
+  .list{margin-top:10px}
+  .item{
+    border-top:1px solid var(--line);
+    padding:10px 0;
+  }
+  .item:first-child{border-top:none;padding-top:0}
+  .item b{display:block}
+  .tabs{
+    display:flex;gap:8px;margin:12px 0 0;
+  }
+  .tab{
+    flex:1; text-align:center;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    cursor:pointer;
+    color:var(--muted);
+    user-select:none;
+  }
+  .tab.active{
+    color:var(--text);
+    border-color:rgba(78,108,255,.45);
+    background:rgba(78,108,255,.10);
+  }
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:18px}
+  .modal{
+    width:min(420px,100%);
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .modal header{border-bottom:1px solid var(--line)}
+  .close{cursor:pointer;font-size:18px;padding:6px 10px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--text)}
+  .hidden{display:none}
+
+  .toast{
+    position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+    background:rgba(15,23,42,.92);color:#fff;
+    padding:10px 12px;border-radius:14px;
+    font-size:13px;box-shadow:0 16px 40px rgba(0,0,0,.35);
+    max-width:min(480px,92%);
+  }
+  body.dark .toast{background:rgba(255,255,255,.12)}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="shell">
+    <div class="app" id="app">
+
+      <header>
+        <div class="brand">
+          <div class="logo"></div>
+          <b id="brandTap">MikPay</b>
+          <span class="pill" id="rolePill">Гость</span>
+        </div>
+        <button class="iconbtn" id="gearBtn" title="Настройки" onclick="openSettings()" aria-label="Настройки">⚙️</button>
+      </header>
+
+      <!-- Screens -->
+      <div class="screen" id="screenAuth">
+        <div class="title center">Добро пожаловать</div>
+        <div class="sub center">Войдите или создайте аккаунт (данные хранятся в вашем браузере).</div>
+
+        <div class="tabs">
+          <div class="tab active" id="tabLogin" onclick="switchAuth('login')">Вход</div>
+          <div class="tab" id="tabReg" onclick="switchAuth('reg')">Регистрация</div>
+        </div>
+
+        <div class="gap"></div>
+
+        <div id="authLogin">
+          <label>Email</label>
+          <input id="loginEmail" type="email" placeholder="example@mail.com" />
+          <label>Пароль</label>
+          <input id="loginPass" type="password" placeholder="••••••••" />
+          <button class="btn" onclick="doLogin()">Войти</button>
+          <button class="btn secondary" onclick="openForgot()">Забыли пароль?</button>
+        </div>
+
+        <div id="authReg" class="hidden">
+          <label>Email</label>
+          <input id="regEmail" type="email" placeholder="example@mail.com" />
+          <label>Пароль</label>
+          <input id="regPass" type="password" placeholder="Придумайте пароль" />
+          <button class="btn" onclick="doRegister()">Создать аккаунт</button>
+          <div class="muted center" style="margin-top:10px">
+            Регистрация создаёт локальный аккаунт в этом браузере.
+          </div>
+        </div>
+      </div>
+
+      <div class="screen hidden" id="screenMain">
+        <div class="card">
+          <div class="muted">Баланс (информативно)</div>
+          <div class="balance" id="bal">0 ₽ <small>RUB</small></div>
+          <div class="actions">
+            <button class="btn" onclick="topUp()">Пополнить</button>
+            <button class="btn secondary" onclick="transfer()">Перевод</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <b>История</b>
+            <span class="muted" id="opsCount">0 операций</span>
+          </div>
+          <div class="list" id="opsList">
+            <div class="muted">Пока пусто</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="overlay hidden" id="settingsOv">
+  <div class="modal">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <b>Настройки</b>
+        <span class="pill" id="settingsEmail">—</span>
+      </div>
+      <button class="close" onclick="closeSettings()">✕</button>
+    </header>
+    <div class="screen">
+
+      <div class="card">
+        <b>Профиль</b>
+        <div class="muted" id="profileInfo" style="margin-top:6px">—</div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <b>Внешний вид</b>
+<div class="gap"></div>
+        <button class="btn secondary" onclick="toggleTheme()">Сменить тему</button>
+        <div class="muted" style="margin-top:8px">Тема сохраняется в браузере.</div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <b>Безопасность</b>
+        <div class="gap"></div>
+        <button class="btn secondary" onclick="openChangePass()">Сменить пароль</button>
+        <button class="btn secondary" onclick="openForgot()">Забыли пароль?</button>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <b>Поддержка</b>
+        <div class="muted" style="margin-top:6px">Почта: <b>wwwwliii@outlook.com</b></div>
+        <div class="gap"></div>
+        <button class="btn secondary" onclick="openSupport()">Написать в поддержку</button>
+      </div>
+
+      <div class="gap"></div>
+      <button class="btn danger" onclick="logout()">Выйти</button>
+
+      <div class="muted center" style="margin-top:12px">MikPay • Beta</div>
+    </div>
+  </div>
+</div>
+
+<!-- Support Modal -->
+<div class="overlay hidden" id="supportOv">
+  <div class="modal">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <b>Поддержка</b>
+        <span class="pill">wwwwliii@outlook.com</span>
+      </div>
+      <button class="close" onclick="closeSupport()">✕</button>
+    </header>
+    <div class="screen">
+      <label>Сообщение</label>
+      <textarea id="supportMsg" rows="5" placeholder="Опишите проблему…"></textarea>
+      <button class="btn" onclick="sendSupport()">Отправить</button>
+      <div class="muted" style="margin-top:10px">
+        (В этой версии сообщение не отправляется по сети — это форма для интерфейса.)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Change password -->
+<div class="overlay hidden" id="chgOv">
+  <div class="modal">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <b>Смена пароля</b>
+      </div>
+      <button class="close" onclick="closeChangePass()">✕</button>
+    </header>
+    <div class="screen">
+      <label>Текущий пароль</label>
+      <input id="oldPass" type="password" placeholder="••••••••" />
+      <label>Новый пароль</label>
+      <input id="newPass" type="password" placeholder="••••••••" />
+      <button class="btn" onclick="changePass()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot password -->
+<div class="overlay hidden" id="forgotOv">
+  <div class="modal">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <b>Забыли пароль?</b>
+      </div>
+      <button class="close" onclick="closeForgot()">✕</button>
+    </header>
+    <div class="screen">
+      <div class="card">
+        <div class="muted">
+          Без сервера мы не можем отправлять письма. Но мы можем дать “локальное восстановление”:
+          если вы создали аккаунт в этом браузере — можно сбросить пароль тут же.
+        </div>
+      </div>
+      <div class="gap"></div>
+      <label>Email аккаунта</label>
+      <input id="forgotEmail" type="email" placeholder="example@mail.com" />
+      <label>Новый пароль</label>
+      <input id="forgotNew" type="password" placeholder="••••••••" />
+      <button class="btn" onclick="resetPass()">Сбросить пароль</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin analytics (hidden) -->
+<div class="overlay hidden" id="adminOv">
+  <div class="modal">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <b>Аналитика MikPay</b>
+        <span class="pill">0% комиссия</span>
+      </div>
+      <button class="close" onclick="closeAdmin()">✕</button>
+    </header>
+    <div class="screen">
+      <div class="card">
+        <div class="muted">Всего потрачено через сервис</div>
+        <div class="balance" id="totalSpent">0 ₽ <small>RUB</small></div>
+        <div class="muted" id="totalOps" style="margin-top:6px">0 операций</div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <b>Метрики</b>
+        <div class="list">
+          <div class="item">
+            <b>Средний платёж</b>
+            <div class="muted" id="avgPay">0 ₽</div>
+<div class="gap"></div>
+        <button class="btn secondary" onclick="toggleTheme()">Сменить тему</button>
+        <div class="muted" style="margin-top:8px">Тема сохраняется в браузере.</div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <b>Безопасность</b>
+        <div class="gap"></div>
+        <button class="btn secondary" onclick="openChangePass()">Сменить пароль</button>
+        <button class="btn secondary" onclick="openForgot()">Забыли пароль?</button>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <b>Поддержка</b>
+        <div class="muted" style="margin-top:6px">Почта: <b>wwwwliii@outlook.com</b></div>
+        <div class="gap"></div>
+        <button class="btn secondary" onclick="openSupport()">Написать в поддержку</button>
+      </div>
+
+      <div class="gap"></div>
+      <button class="btn danger" onclick="logout()">Выйти</button>
+
+      <div class="muted center" style="margin-top:12px">MikPay • Beta</div>
+    </div>
+  </div>
+</div>
+
+<!-- Support Modal -->
+<div class="overlay hidden" id="supportOv">
+  <div class="modal">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <b>Поддержка</b>
+        <span class="pill">wwwwliii@outlook.com</span>
+      </div>
+      <button class="close" onclick="closeSupport()">✕</button>
+    </header>
+    <div class="screen">
+      <label>Сообщение</label>
+      <textarea id="supportMsg" rows="5" placeholder="Опишите проблему…"></textarea>
+      <button class="btn" onclick="sendSupport()">Отправить</button>
+      <div class="muted" style="margin-top:10px">
+        (В этой версии сообщение не отправляется по сети — это форма для интерфейса.)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Change password -->
+<div class="overlay hidden" id="chgOv">
+  <div class="modal">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <b>Смена пароля</b>
+      </div>
+      <button class="close" onclick="closeChangePass()">✕</button>
+    </header>
+    <div class="screen">
+      <label>Текущий пароль</label>
+      <input id="oldPass" type="password" placeholder="••••••••" />
+      <label>Новый пароль</label>
+      <input id="newPass" type="password" placeholder="••••••••" />
+      <button class="btn" onclick="changePass()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot password -->
+<div class="overlay hidden" id="forgotOv">
+  <div class="modal">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <b>Забыли пароль?</b>
+      </div>
+      <button class="close" onclick="closeForgot()">✕</button>
+    </header>
+    <div class="screen">
+      <div class="card">
+        <div class="muted">
+          Без сервера мы не можем отправлять письма. Но мы можем дать “локальное восстановление”:
+          если вы создали аккаунт в этом браузере — можно сбросить пароль тут же.
+        </div>
+      </div>
+      <div class="gap"></div>
+      <label>Email аккаунта</label>
+      <input id="forgotEmail" type="email" placeholder="example@mail.com" />
+      <label>Новый пароль</label>
+      <input id="forgotNew" type="password" placeholder="••••••••" />
+      <button class="btn" onclick="resetPass()">Сбросить пароль</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin analytics (hidden) -->
+<div class="overlay hidden" id="adminOv">
+  <div class="modal">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <b>Аналитика MikPay</b>
+        <span class="pill">0% комиссия</span>
+      </div>
+      <button class="close" onclick="closeAdmin()">✕</button>
+    </header>
+    <div class="screen">
+      <div class="card">
+        <div class="muted">Всего потрачено через сервис</div>
+        <div class="balance" id="totalSpent">0 ₽ <small>RUB</small></div>
+        <div class="muted" id="totalOps" style="margin-top:6px">0 операций</div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <b>Метрики</b>
+        <div class="list">
+          <div class="item">
+            <b>Средний платёж</b>
+            <div class="muted" id="avgPay">0 ₽</div>
+</div>
+          <div class="item">
+            <b>Последняя операция</b>
+            <div class="muted" id="lastOp">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="muted center" style="margin-top:12px">
+        Панель скрыта. Открытие: 5 кликов по “MikPay” → пароль.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script>
+  // ====== CONFIG ======
+  const ADMIN_EMAIL = "mrmisha186@gmail.com";
+  const ADMIN_PASS  = "world703";
+
+  // ====== STORAGE KEYS ======
+  const K_USERS = "mikpay_users";
+  const K_SESSION = "mikpay_session";
+  const K_THEME = "mikpay_theme";
+  const K_ANALYTICS = "mikpay_analytics";
+
+  // ====== STATE ======
+  let authMode = "login";
+  let tapCount = 0;
+
+  // ====== HELPERS ======
+  const $ = (id)=>document.getElementById(id);
+  const toast = (msg)=>{
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.remove("hidden");
+    setTimeout(()=>t.classList.add("hidden"), 1600);
+  };
+
+  function loadUsers(){
+    try { return JSON.parse(localStorage.getItem(K_USERS) || "{}"); }
+    catch { return {}; }
+  }
+  function saveUsers(u){ localStorage.setItem(K_USERS, JSON.stringify(u)); }
+
+  function loadSession(){
+    try { return JSON.parse(localStorage.getItem(K_SESSION) || "null"); }
+    catch { return null; }
+  }
+  function saveSession(s){ localStorage.setItem(K_SESSION, JSON.stringify(s)); }
+
+  function loadAnalytics(){
+    try {
+      return JSON.parse(localStorage.getItem(K_ANALYTICS) || JSON.stringify({ totalSpent:0, ops:0, last:"—" }));
+    } catch {
+      return { totalSpent:0, ops:0, last:"—" };
+    }
+  }
+  function saveAnalytics(a){ localStorage.setItem(K_ANALYTICS, JSON.stringify(a)); }
+
+  function money(n){
+    const v = Math.max(0, Math.floor(n));
+    return v.toLocaleString("ru-RU") + " ₽";
+  }
+
+  // ====== THEME ======
+  (function initTheme(){
+    const t = localStorage.getItem(K_THEME);
+    if(t==="dark") document.body.classList.add("dark");
+  })();
+
+  function toggleTheme(){
+    document.body.classList.toggle("dark");
+    localStorage.setItem(K_THEME, document.body.classList.contains("dark") ? "dark" : "light");
+    toast("Тема изменена");
+  }
+
+  // ====== AUTH UI ======
+  function switchAuth(mode){
+    authMode = mode;
+    $("tabLogin").classList.toggle("active", mode==="login");
+    $("tabReg").classList.toggle("active", mode==="reg");
+    $("authLogin").classList.toggle("hidden", mode!=="login");
+    $("authReg").classList.toggle("hidden", mode!=="reg");
+  }
+
+  // ====== ROUTING ======
+  function showAuth(){
+    $("screenMain").classList.add("hidden");
+    $("screenAuth").classList.remove("hidden");
+    $("gearBtn").disabled = true;
+    $("rolePill").textContent = "Гость";
+  }
+
+  function showMain(){
+    $("screenAuth").classList.add("hidden");
+    $("screenMain").classList.remove("hidden");
+    $("gearBtn").disabled = false;
+    renderMain();
+  }
+
+  // ====== AUTH LOGIC ======
+  function doRegister(){
+    const email = $("regEmail").value.trim().toLowerCase();
+    const pass  = $("regPass").value;
+
+    if(!email || !pass){ toast("Заполни email и пароль"); return; }
+
+    const users = loadUsers();
+    if(users[email]){ toast("Аккаунт уже есть"); switchAuth("login"); return; }
+
+    users[email] = { pass, balance: 0, ops: [] };
+    saveUsers(users);
+
+    toast("Аккаунт создан");
+    switchAuth("login");
+    $("loginEmail").value = email;
+    $("loginPass").value = pass;
+  }
+
+  function doLogin(){
+    const email = $("loginEmail").value.trim().toLowerCase();
+    const pass  = $("loginPass").value;
+
+    // admin shortcut allowed only for panel access later
+    const users = loadUsers();
+    if(users[email] && users[email].pass === pass){
+      saveSession({ email });
+      toast("Вход выполнен");
+      showMain();
+      return;
+    }
+
+    // optional: admin account exists even if not registered
+    if(email === ADMIN_EMAIL && pass === ADMIN_PASS){
+      saveSession({ email }); // allow login as admin too
+      toast("Вход (админ)");
+      showMain();
+      return;
+    }
+
+    toast("Неверный email или пароль");\
+}
+
+  function logout(){
+    saveSession(null);
+    closeSettings();
+    closeAdmin();
+    toast("Вы вышли");
+    showAuth();
+  }
+
+  // ====== MAIN LOGIC ======
+  function currentUser(){
+    const s = loadSession();
+    if(!s || !s.email) return null;
+    const users = loadUsers();
+    if(s.email===ADMIN_EMAIL && !users[s.email]){
+      // create admin record on the fly for UI
+      users[s.email] = { pass: ADMIN_PASS, balance: 0, ops: [] };
+      saveUsers(users);
+    }
+    return { email: s.email, data: loadUsers()[s.email] };
+  }
+
+  function renderMain(){
+    const cu = currentUser();
+    if(!cu){ showAuth(); return; }
+
+    $("rolePill").textContent = (cu.email===ADMIN_EMAIL) ? "Админ" : "Пользователь";
+
+    const b = cu.data?.balance ?? 0;
+    $("bal").innerHTML = ${money(b)} <small>RUB</small>;
+
+    const ops = cu.data?.ops ?? [];
+    $("opsCount").textContent = ${ops.length} операций;
+    const list = $("opsList");
+    if(!ops.length){
+      list.innerHTML = <div class="muted">Пока пусто</div>;
+    } else {
+      list.innerHTML = ops.slice(0,12).map(o => `
+        <div class="item">
+          <b>${o.title}</b>
+          <div class="muted">${o.when}</div>
+        </div>
+      `).join("");
+    }
+  }
+
+  function addOp(title){
+    const cu = currentUser();
+    if(!cu) return;
+
+    const users = loadUsers();
+    const u = users[cu.email];
+    u.ops.unshift({ title, when: new Date().toLocaleString("ru-RU") });
+    users[cu.email]=u;
+    saveUsers(users);
+
+    // analytics
+    const a = loadAnalytics();
+    a.ops += 1;
+    a.last = title;
+    saveAnalytics(a);
+
+    renderMain();
+  }
+
+  function topUp(){
+    const sumStr = prompt("Сумма пополнения (₽):", "1000");
+    if(sumStr===null) return;
+    const sum = Math.floor(Number(sumStr));
+    if(!Number.isFinite(sum) || sum<=0){ toast("Неверная сумма"); return; }
+
+    const cu = currentUser();
+    const users = loadUsers();
+    users[cu.email].balance = (users[cu.email].balance||0) + sum;
+    saveUsers(users);
+
+    // analytics: "потратили через нас" — считаем любые операции как оборот
+    const a = loadAnalytics();
+    a.totalSpent += sum;
+    saveAnalytics(a);
+
+    addOp(`Пополнение: +${money(sum)}`);
+    toast("Готово");
+  }
+
+  function transfer(){
+    const to = prompt("Кому (email):", "test@mail.com");
+    if(to===null) return;
+    const sumStr = prompt("Сумма перевода (₽):", "500");
+    if(sumStr===null) return;
+    const sum = Math.floor(Number(sumStr));
+    if(!Number.isFinite(sum) || sum<=0){ toast("Неверная сумма"); return; }
+
+    const cu = currentUser();
+    const users = loadUsers();
+    const bal = users[cu.email].balance || 0;
+    if(sum>bal){ toast("Недостаточно средств"); return; }
+
+    users[cu.email].balance = bal - sum;
+
+    // если получатель существует локально — зачислим
+    const toEmail = String(to).trim().toLowerCase();
+    if(users[toEmail]){
+      users[toEmail].balance = (users[toEmail].balance||0) + sum;
+      users[toEmail].ops.unshift({ title:`Перевод получен: +${money(sum)}`, when:new Date().toLocaleString("ru-RU") });
+    }
+
+    saveUsers(users);
+
+    const a = loadAnalytics();
+    a.totalSpent += sum;
+    saveAnalytics(a);
+
+    addOp(`Перевод: -${money(sum)} → ${toEmail}`);
+    toast("Перевод создан");
+  }
+
+  // ====== SETTINGS ======
+  function openSettings(){
+    const cu = currentUser();
+    if(!cu){ toast("Сначала войдите"); return; }
+    $("settingsOv").classList.remove("hidden");
+    $("settingsEmail").textContent = cu.email;
+    $("profileInfo").textContent = (cu.email===ADMIN_EMAIL)
+      ? "Аккаунт администратора (локальный доступ)"
+      : "Обычный пользовательский аккаунт";
+  }
+  function closeSettings(){ $("settingsOv").classList.add("hidden"); }
+
+  // ====== SUPPORT ======
+  function openSupport(){ $("supportOv").classList.remove("hidden"); }
+  function closeSupport(){ $("supportOv").classList.add("hidden"); }
+  function sendSupport(){
+    const msg = $("supportMsg").value.trim();
+    if(!msg){ toast("Введите сообщение"); return; }
+    $("supportMsg").value = "";
+    toast("Сообщение подготовлено");
+    closeSupport();
+  }
+// ====== CHANGE PASS ======
+  function openChangePass(){ $("chgOv").classList.remove("hidden"); }
+  function closeChangePass(){
+    $("chgOv").classList.add("hidden");
+    $("oldPass").value=""; $("newPass").value="";
+  }
+  function changePass(){
+    const cu = currentUser();
+    if(!cu){ toast("Нет сессии"); return; }
+    const oldP = $("oldPass").value;
+    const newP = $("newPass").value;
+    if(!oldP || !newP){ toast("Заполните поля"); return; }
+
+    const users = loadUsers();
+    if(users[cu.email]?.pass !== oldP){ toast("Текущий пароль неверный"); return; }
+    users[cu.email].pass = newP;
+    saveUsers(users);
+    toast("Пароль обновлён");
+    closeChangePass();
+  }
+
+  // ====== FORGOT PASS ======
+  function openForgot(){ $("forgotOv").classList.remove("hidden"); }
+  function closeForgot(){
+    $("forgotOv").classList.add("hidden");
+    $("forgotEmail").value=""; $("forgotNew").value="";
+  }
+  function resetPass(){
+    const email = $("forgotEmail").value.trim().toLowerCase();
+    const np = $("forgotNew").value;
+    if(!email || !np){ toast("Заполните поля"); return; }
+
+    const users = loadUsers();
+    if(!users[email] && !(email===ADMIN_EMAIL)){ toast("Аккаунт не найден в этом браузере"); return; }
+
+    if(email===ADMIN_EMAIL){
+      // we do not allow resetting admin via forgot here; keep it strict
+      toast("Админ-пароль сбрасывать нельзя");
+      return;
+    }
+
+    users[email].pass = np;
+    saveUsers(users);
+    toast("Пароль сброшен");
+    closeForgot();
+    switchAuth("login");
+    $("loginEmail").value = email;
+    $("loginPass").value = np;
+  }
+
+  // ====== HIDDEN ADMIN ANALYTICS ======
+  function openAdmin(){
+    // password gate always
+    const p = prompt("Пароль админа:");
+    if(p !== ADMIN_PASS){ toast("Неверный пароль"); return; }
+
+    const a = loadAnalytics();
+    $("totalSpent").innerHTML = ${money(a.totalSpent)} <small>RUB</small>;
+    $("totalOps").textContent = ${a.ops} операций;
+    $("avgPay").textContent = a.ops ? money(Math.round(a.totalSpent / a.ops)) : money(0);
+    $("lastOp").textContent = a.last || "—";
+    $("adminOv").classList.remove("hidden");
+  }
+  function closeAdmin(){ $("adminOv").classList.add("hidden"); }
+
+  $("brandTap").addEventListener("click", ()=>{
+    tapCount++;
+    if(tapCount>=5){
+      tapCount=0;
+      openAdmin();
+    }
+  });
+
+  // ====== INIT ======
+  $("gearBtn").disabled = true;
+  switchAuth("login");
+
+  const session = loadSession();
+  if(session && session.email){
+    showMain();
+  } else {
+    showAuth();
+  }
+</script>
+</body>
+</html>
